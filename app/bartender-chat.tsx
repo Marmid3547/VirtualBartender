@@ -40,27 +40,27 @@ export default function BartenderChatScreen() {
       />
       <View style={styles.overlay} />
 
-      <View style={[styles.content, { paddingTop: insets.top }]}>
-        {/* Заголовок с барменом и кнопкой назад */}
-        <View style={styles.header}>
-          <Pressable
-            onPress={handleBack}
-            style={({ pressed }) => [
-              styles.backButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            <MaterialIcons name="arrow-back" size={24} color={theme.colors.text} />
-          </Pressable>
+      {/* Фото бармена на треть экрана */}
+      <View style={styles.bartenderSection}>
+        <Pressable
+          onPress={handleBack}
+          style={({ pressed }) => [
+            styles.backButton,
+            pressed && styles.buttonPressed,
+          ]}
+        >
+          <MaterialIcons name="arrow-back" size={24} color={theme.colors.background} />
+        </Pressable>
+        
+        <Text style={styles.bartenderName}>{selectedBartender.nameRu}</Text>
+        <Image 
+          source={selectedBartender.image} 
+          style={styles.bartenderImage} 
+          contentFit="cover" 
+        />
+      </View>
 
-          <View style={styles.bartenderInfo}>
-            <Image source={selectedBartender.image} style={styles.bartenderAvatar} contentFit="cover" />
-            <View style={styles.bartenderDetails}>
-              <Text style={styles.bartenderName}>{selectedBartender.nameRu}</Text>
-              <Text style={styles.bartenderRole}>{selectedBartender.descriptionRu}</Text>
-            </View>
-          </View>
-        </View>
+      <View style={styles.content}>
 
         {/* Селектор ингредиентов */}
         <IngredientSelector />
@@ -84,61 +84,58 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 250,
+    height: '33.33%',
   },
   overlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 250,
-    backgroundColor: theme.colors.overlay,
+    height: '33.33%',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
-  content: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
+  bartenderSection: {
+    height: '33.33%',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.md,
-    gap: theme.spacing.md,
+    paddingBottom: theme.spacing.xl,
+    position: 'relative',
   },
   backButton: {
+    position: 'absolute',
+    top: theme.spacing.xl,
+    left: theme.spacing.md,
     width: 40,
     height: 40,
     borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
   buttonPressed: {
     opacity: 0.7,
   },
-  bartenderInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    flex: 1,
-  },
-  bartenderAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-  },
-  bartenderDetails: {
-    flex: 1,
-  },
   bartenderName: {
-    ...theme.typography.h3,
-    color: theme.colors.text,
+    ...theme.typography.h1,
+    color: theme.colors.background,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+    marginBottom: theme.spacing.md,
+    zIndex: 1,
   },
-  bartenderRole: {
-    ...theme.typography.caption,
-    color: theme.colors.textSecondary,
-    marginTop: 2,
+  bartenderImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+  },
+  content: {
+    flex: 1,
   },
   chatContainer: {
     flex: 1,
