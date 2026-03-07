@@ -26,7 +26,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Image
-        source={require('@/assets/images/bar-background.png')}
+        source={require('@/assets/images/bar-background.jpg')}
         style={styles.background}
         contentFit="cover"
       />
