@@ -186,7 +186,7 @@ export function BartenderProvider({ children }: { children: ReactNode }) {
 
       // Озвучить ответ если включен голосовой режим
       if (voiceEnabled) {
-        await voiceService.speak(response);
+        await voiceService.speak(response, selectedBartender.id);
       }
     } catch (error) {
       console.error('Error sending message:', error);
@@ -242,7 +242,7 @@ export function BartenderProvider({ children }: { children: ReactNode }) {
   };
 
   const speakMessage = async (text: string) => {
-    await voiceService.speak(text);
+    await voiceService.speak(text, selectedBartender.id);
   };
 
   return (

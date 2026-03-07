@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: theme.spacing.sm,
     padding: theme.spacing.md,
     backgroundColor: theme.colors.background,
@@ -311,7 +311,9 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    maxHeight: 100,
+    minHeight: 48,
+    maxHeight: 48,
+    paddingVertical: 0,
   },
   voiceToggleButton: {
     backgroundColor: theme.colors.surface,

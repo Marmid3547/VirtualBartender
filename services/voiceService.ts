@@ -66,7 +66,11 @@ class VoiceService {
     return this.recording !== null;
   }
 
-  async speak(text: string, language: string = 'ru-RU'): Promise<void> {
+  async speak(
+    text: string, 
+    bartenderId: string = 'asian',
+    language: string = 'ru-RU'
+  ): Promise<void> {
     try {
       // Остановить текущую речь если она идет
       if (this.isSpeaking) {
@@ -75,10 +79,14 @@ class VoiceService {
 
       this.isSpeaking = true;
 
+      // Настройки голоса для каждого бармена
+      const voiceSettings = this.getVoiceSettings(bartenderId);
+
       await Speech.speak(text, {
         language,
-        pitch: 1.0,
-        rate: 0.9,
+        pitch: voiceSettings.pitch,
+        rate: voiceSettings.rate,
+        voice: voiceSettings.voice,
         onDone: () => {
           this.isSpeaking = false;
         },
@@ -93,6 +101,26 @@ class VoiceService {
       console.error('Failed to speak:', error);
       this.isSpeaking = false;
     }
+  }
+
+  private getVoiceSettings(bartenderId: string) {
+    // Настройки голоса для каждого бармена
+    const settings: Record<string, { pitch: number; rate: number; voice?: string }> = {
+      asian: {
+        pitch: 1.2,      // Более высокий женский голос
+        rate: 0.85,      // Медленнее, томнее
+      },
+      man: {
+        pitch: 0.8,      // Низкий мужской голос
+        rate: 0.9,       // Умеренная скорость
+      },
+      young: {
+        pitch: 1.0,      // Средний мужской голос
+        rate: 1.0,       // Быстрее, энергичнее
+      },
+    };
+
+    return settings[bartenderId] || settings.asian;
   }
 
   async stopSpeaking(): Promise<void> {
