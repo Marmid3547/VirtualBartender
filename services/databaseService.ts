@@ -20,18 +20,16 @@ export const databaseService = {
   },
 
   async updateBartenderProfile(
-    userId: string,
-    updates: Partial<Omit<BartenderProfile, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
-  ) {
-    const { data, error } = await supabase
-      .from('bartender_profiles')
-      .update(updates)
-      .eq('user_id', userId)
-      .select()
-      .single();
-
-    return { data, error };
-  },
+  userId: string,
+  updates: Partial<Omit<BartenderProfile, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+) {
+  const { data, error } = await supabase
+    .from('bartender_profiles')
+    .upsert({ user_id: userId, ...updates }, { onConflict: 'user_id' })
+    .select()
+    .single();
+  return { data, error };
+},
 
   // Избранные коктейли
   async getFavoriteCocktails(userId: string) {
