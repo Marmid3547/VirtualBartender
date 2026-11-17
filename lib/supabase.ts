@@ -1,40 +1,33 @@
-// Powered by OnSpace.AI
-
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://mcrznvmhbadjeuakqmlc.supabase.co';
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jcnpudm1oYmFkamV1YWtxbWxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzcxMzY2MjIsImV4cCI6MjA1MjcxMjYyMn0.Hgz-CuHq7z6tBCYXh8ZRf-oUWq7Z0_1SvCYmCUJFLfU';
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Не заданы EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY. Скопируйте .env.example в .env и заполните значения.'
+  );
+}
 
 const createStorageAdapter = () => {
   if (Platform.OS === 'web') {
     return {
-      getItem: (key: string) => {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          return Promise.resolve(window.localStorage.getItem(key));
-        }
-        return Promise.resolve(null);
-      },
+      getItem: (key: string) =>
+        Promise.resolve(typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem(key) : null),
       setItem: (key: string, value: string) => {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.setItem(key, value);
-          return Promise.resolve();
-        }
+        if (typeof window !== 'undefined' && window.localStorage) window.localStorage.setItem(key, value);
         return Promise.resolve();
       },
       removeItem: (key: string) => {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          window.localStorage.removeItem(key);
-          return Promise.resolve();
-        }
+        if (typeof window !== 'undefined' && window.localStorage) window.localStorage.removeItem(key);
         return Promise.resolve();
       },
     };
-  } else {
-    return AsyncStorage;
   }
+  return AsyncStorage;
 };
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
