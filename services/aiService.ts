@@ -1,4 +1,4 @@
-// Powered by OnSpace.AI
+ import { supabase } from '@/lib/supabase';
 
 interface AIMessage {
   role: 'system' | 'user' | 'assistant';
@@ -14,103 +14,39 @@ interface BartenderContext {
   ingredients: string[];
 }
 
+// Системный промпт теперь строится на сервере (Edge Function bartender-chat)
+async function requestReply(
+  messages: AIMessage[],
+  personality: string,
+  context?: BartenderContext
+): Promise<string> {
+  const { data, error } = await supabase.functions.invoke('bartender-chat', {
+    body: {
+      messages: messages.filter((m) => m.role !== 'system'),
+      personality,
+      context,
+    },
+  });
+  if (error) throw error;
+  return data?.content?.trim() || 'Извините, не могу ответить сейчас.';
+}
+
 export const aiService = {
   async chat(
-    messages: AIMessage[], 
+    messages: AIMessage[],
     bartenderPersonality: string,
     context?: BartenderContext
   ): Promise<string> {
     try {
-      const response = await fetch('https://api.onspace.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: `Ты ${bartenderPersonality}
-
-${context ? `
-ТВОИ СПЕЦИАЛИЗАЦИИ:
-${context.specialties.map(s => `- ${s}`).join('\n')}
-
-ТВОИ ФИРМЕННЫЕ ФРАЗЫ (используй периодически):
-${context.catchphrases.map(p => `- ${p}`).join('\n')}
-
-${context.hasIngredients ? `ДОСТУПНЫЕ ИНГРЕДИЕНТЫ У ПОЛЬЗОВАТЕЛЯ:
-${context.ingredients.join(', ')}` : ''}
-
-СЧЕТЧИК СООБЩЕНИЙ: ${context.messageCount} (каждые 5-7 сообщений предлагай что-то новое)
-` : ''}
-
-ТВОИ ОСНОВНЫЕ ЗАДАЧИ:
-1. КОКТЕЙЛИ И РЕЦЕПТЫ:
-   - Помогать смешивать коктейли на основе имеющихся ингредиентов
-   - Предлагать рецепты с точными пропорциями
-   - Адаптировать рецепты под доступные продукты
-   - Объяснять технику приготовления
-   - Рассказывать истории происхождения коктейлей
-
-2. РАЗВЛЕЧЕНИЯ:
-   - Рассказывать анекдоты и истории по запросу
-   - Предлагать тосты для разных поводов
-   - Предлагать питейные игры (Я никогда не..., Правда или выпей, Кто скорее всего, и др.)
-   - Создавать веселую атмосферу
-
-3. ИНТЕРАКТИВНОСТЬ:
-   - Задавать вопросы о предпочтениях
-   - Активно предлагать новые идеи
-   - Периодически спрашивать о настроении и поводе
-   - Предлагать игры когда пользователь упоминает компанию/вечеринку
-   - Каждые 5-7 сообщений предлагать что-то новое (коктейль, игру, тост, историю)
-
-ВАЖНЫЕ ОГРАНИЧЕНИЯ:
-- НЕ обсуждай политику, войну, смерть
-- НЕ используй сексуализированные описания
-- ВСЕГДА рекомендуй умеренное потребление алкоголя
-- Предлагай безалкогольные альтернативы
-- Напоминай о возрастных ограничениях 18+
-
-СТИЛЬ ОБЩЕНИЯ:
-- Живой и дружелюбный
-- Используй свои фирменные фразы естественно
-- Будь проактивным — не жди запросов, предлагай сам
-- Адаптируйся под настроение пользователя
-- Короткие ответы (2-4 предложения), если не просят подробностей
-- Используй эмодзи умеренно 🍹
-
-ФОРМАТ РЕЦЕПТОВ:
-Ингредиенты:
-- [количество] [ингредиент]
-
-Приготовление:
-1. [шаг 1]
-2. [шаг 2]
-
-Помни: ты создаешь атмосферу уютного бара, где каждый гость — желанный друг!`,
-            },
-            ...messages,
-          ],
-          temperature: 0.8,
-          max_tokens: 500,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data.choices[0]?.message?.content || 'Извините, не могу ответить сейчас.';
+      return await requestReply(messages, bartenderPersonality, context);
     } catch (error) {
       console.error('AI Service Error:', error);
       return 'Извините, возникла ошибка при обработке вашего запроса.';
     }
   },
 
+  // Эффект "печатающегося" ответа: получаем текст целиком и выдаём порциями.
+  // Сигнатура прежняя — ChatInterface/контексты менять не нужно.
   async streamChat(
     messages: AIMessage[],
     bartenderPersonality: string,
@@ -118,121 +54,11 @@ ${context.ingredients.join(', ')}` : ''}
     context?: BartenderContext
   ): Promise<void> {
     try {
-      const response = await fetch('https://api.onspace.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: `Ты ${bartenderPersonality}
-
-${context ? `
-ТВОИ СПЕЦИАЛИЗАЦИИ:
-${context.specialties.map(s => `- ${s}`).join('\n')}
-
-ТВОИ ФИРМЕННЫЕ ФРАЗЫ (используй периодически):
-${context.catchphrases.map(p => `- ${p}`).join('\n')}
-
-${context.hasIngredients ? `ДОСТУПНЫЕ ИНГРЕДИЕНТЫ У ПОЛЬЗОВАТЕЛЯ:
-${context.ingredients.join(', ')}` : ''}
-
-СЧЕТЧИК СООБЩЕНИЙ: ${context.messageCount} (каждые 5-7 сообщений предлагай что-то новое)
-` : ''}
-
-ТВОИ ОСНОВНЫЕ ЗАДАЧИ:
-1. КОКТЕЙЛИ И РЕЦЕПТЫ:
-   - Помогать смешивать коктейли на основе имеющихся ингредиентов
-   - Предлагать рецепты с точными пропорциями
-   - Адаптировать рецепты под доступные продукты
-   - Объяснять технику приготовления
-   - Рассказывать истории происхождения коктейлей
-
-2. РАЗВЛЕЧЕНИЯ:
-   - Рассказывать анекдоты и истории по запросу
-   - Предлагать тосты для разных поводов
-   - Предлагать питейные игры (Я никогда не..., Правда или выпей, Кто скорее всего, и др.)
-   - Создавать веселую атмосферу
-
-3. ИНТЕРАКТИВНОСТЬ:
-   - Задавать вопросы о предпочтениях
-   - Активно предлагать новые идеи
-   - Периодически спрашивать о настроении и поводе
-   - Предлагать игры когда пользователь упоминает компанию/вечеринку
-   - Каждые 5-7 сообщений предлагать что-то новое (коктейль, игру, тост, историю)
-
-ВАЖНЫЕ ОГРАНИЧЕНИЯ:
-- НЕ обсуждай политику, войну, смерть
-- НЕ используй сексуализированные описания
-- ВСЕГДА рекомендуй умеренное потребление алкоголя
-- Предлагай безалкогольные альтернативы
-- Напоминай о возрастных ограничениях 18+
-
-СТИЛЬ ОБЩЕНИЯ:
-- Живой и дружелюбный
-- Используй свои фирменные фразы естественно
-- Будь проактивным — не жди запросов, предлагай сам
-- Адаптируйся под настроение пользователя
-- Короткие ответы (2-4 предложения), если не просят подробностей
-- Используй эмодзи умеренно 🍹
-
-ФОРМАТ РЕЦЕПТОВ:
-Ингредиенты:
-- [количество] [ингредиент]
-
-Приготовление:
-1. [шаг 1]
-2. [шаг 2]
-
-Помни: ты создаешь атмосферу уютного бара, где каждый гость — желанный друг!`,
-            },
-            ...messages,
-          ],
-          temperature: 0.8,
-          max_tokens: 500,
-          stream: true,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('No reader available');
-      }
-
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices[0]?.delta?.content;
-              if (content) {
-                onChunk(content);
-              }
-            } catch (e) {
-              // Игнорируем ошибки парсинга
-            }
-          }
-        }
+      const reply = await requestReply(messages, bartenderPersonality, context);
+      const words = reply.match(/\S+\s*/g) ?? [reply];
+      for (let i = 0; i < words.length; i += 2) {
+        onChunk(words.slice(i, i + 2).join(''));
+        await new Promise((r) => setTimeout(r, 30));
       }
     } catch (error) {
       console.error('AI Streaming Error:', error);
